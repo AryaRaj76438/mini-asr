@@ -3,8 +3,11 @@ import numpy as np
 from mini_asr.audio.framing import (apply_hann_window, frame_signal)
 from mini_asr.audio.stft import (power_spectrum, stft)
 from mini_asr.features.mel import (create_mel_filterbank,log_mel_spectrogram, mel_spectrogram)
+from mini_asr.features.delta import (delta_features, delta_delta_features)
 
 import numpy as np
+
+from mini_asr.features.normalization import mean_variance_normalize
 
 
 def dct_type_2(
@@ -150,3 +153,32 @@ def compute_mfcc(
     log_mel = log_mel_spectrogram(mel_energy)
 
     return mfcc_from_log_mel(log_mel, n_mfcc=n_mfcc)
+
+
+def compute_mfcc_features(
+        waveform:np.ndarray,
+        sample_rate:int=16000,
+        n_fft:int=400,
+        n_mels:int=40,
+        n_mfcc:int=13,
+        frame_duration_ms: float = 25.0,
+        hop_duration_ms: float = 10.0,
+        include_delta: bool = True,
+        include_delta_delta: bool = True,
+        normalize: bool = False,
+)->np.ndarray:
+    """Compute MFCC, delta, delta-delta features"""
+    static = compute_mfcc(waveform, sample_rate, n_fft, n_mels, n_mfcc,
+                          frame_duration_ms, hop_duration_ms)
+    feature_list = [static]
+
+    if include_delta:
+        feature_list.append(delta_features(features=static))
+
+    if include_delta_delta:
+        feature_list.append(delta_delta_features(static))
+
+    features = np.concatenate(feature_list, axis=1)
+    if normalize:
+        features = mean_variance_normalize(features)
+    return features

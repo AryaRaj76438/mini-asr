@@ -12,7 +12,6 @@ def frame_signal(
     -------
     frames: Array with shape (num_frames, frame_length).
     """
-
     if waveform.ndim != 1:
         raise ValueError("waveform must be 1-D")
 
@@ -52,3 +51,21 @@ def apply_hann_window(frames: np.ndarray)->np.ndarray:
     window = np.hanning(frames.shape[1])
 
     return frames*window
+
+def pre_emphasis(
+        waveform:np.ndarray,
+        coefficient:float=0.97
+)->np.ndarray:
+    """
+    Apply first order pre-emphasis filter
+    """
+    if waveform.ndim!=1:
+        raise ValueError("waveform must be 1-D")
+
+    if not 0.0<=coefficient<=1.0:
+        raise ValueError("coefficient must be [0,1]")
+
+    emphasized = np.empty_like(waveform)
+    emphasized[0] = waveform[0]
+    emphasized[1:] = waveform[1:]-coefficient*waveform[:-1]
+    return emphasized
