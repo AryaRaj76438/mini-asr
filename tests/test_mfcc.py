@@ -1,5 +1,3 @@
-from pyexpat import features
-
 import numpy as np
 
 from mini_asr.features.mfcc import compute_mfcc, compute_mfcc_features
